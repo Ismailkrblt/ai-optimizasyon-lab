@@ -823,7 +823,7 @@ with tab1:
                         bf, cur, result, colorscale,
                         show_traj, show_known, n_levels,
                         st.session_state.step,
-                        color=ALGO_COLORS.get(algo_name, "#6366f1"),
+                        agent_color=ALGO_COLORS.get(algo_name, "#6366f1"),
                     ),
                     use_container_width=True,
                     config={"displayModeBar": False},

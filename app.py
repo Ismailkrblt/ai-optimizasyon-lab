@@ -2,12 +2,12 @@
 app.py – Meta-Sezgisel Optimizasyon Görselleştiricisi  (Gelişmiş Sürüm)
 5 Sekme: Görselleştirici · Karşılaştırma · Analiz · Algoritma Rehberi · Fonksiyon Galerisi
 """
+from __future__ import annotations
 
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-from plotly.subplots import make_subplots
 import time
 import io
 import csv
@@ -704,13 +704,12 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 # ──────────────────────────────────────────────────────────────
 
 with tab1:
-    result: OptimizationResult | None = st.session_state.result
+    result = st.session_state.result  # type: OptimizationResult | None
 
     if result is None:
         st.markdown("---")
         st.info("👈 Sol panelden bir algoritma ve test fonksiyonu seçin, ardından **▶ Optimizasyonu Başlat** butonuna tıklayın.")
         cols = st.columns(4)
-        icons = ["✈️","🧬","❄️","🚫","🐜","🦠","🌀","🐝"]
         names = list(ALGORITHM_REGISTRY.keys())
         for i, col in enumerate(cols):
             n = names[i]
@@ -987,20 +986,23 @@ with tab2:
         rows.sort(key=lambda r: float(r["Hedefe Hata"].replace("e","E")))
         st.dataframe(rows, use_container_width=True, hide_index=True)
 
-        # Bar chart: final scores
+        # Bar chart: final scores — rows sırasıyla hizalı
         st.markdown("#### 🏅 Final Skor Karşılaştırması")
-        names_c = [r["Algoritma"] for r in rows]
-        scores_c = [cmp_results[aname].best_score
-                    for aname in cmp_results
-                    if f"{ALGO_GUIDE.get(aname,{}).get('icon','●')} {aname}" in names_c]
-        colors_c = [ALGO_COLORS.get(aname, "#6366f1") for aname in cmp_results]
+        # rows zaten hataya göre sıralı; her row'un algoritmayı bul
+        sorted_keys = []
+        for row in rows:
+            for aname in cmp_results:
+                if f"{ALGO_GUIDE.get(aname,{}).get('icon','●')} {aname}" == row["Algoritma"]:
+                    sorted_keys.append(aname)
+                    break
+        bar_x      = [f"{ALGO_GUIDE.get(a,{}).get('icon','●')} {a}" for a in sorted_keys]
+        bar_y      = [cmp_results[a].best_score for a in sorted_keys]
+        bar_colors = [ALGO_COLORS.get(a, "#6366f1") for a in sorted_keys]
         bar_fig = go.Figure(go.Bar(
-            x=names_c,
-            y=[cmp_results[list(cmp_results.keys())[i]].best_score
-               for i in range(len(cmp_results))],
-            marker_color=colors_c,
-            text=[f"{v:.4f}" for v in
-                  [cmp_results[k].best_score for k in cmp_results]],
+            x=bar_x,
+            y=bar_y,
+            marker_color=bar_colors,
+            text=[f"{v:.4f}" for v in bar_y],
             textposition="outside",
         ))
         bar_fig.update_layout(
